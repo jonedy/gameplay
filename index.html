@@ -2,23 +2,31 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Game</title>
+  <title>Fantasy Game</title>
   <style>
-    body { margin: 0; overflow: hidden; background: black; }
+    body { margin:0; overflow:hidden; background:black; font-family:sans-serif;}
     #ui {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      color: white;
-      font-family: Arial;
+      position:fixed;
+      top:20px; left:20px;
+      color:white;
+      font-size:20px;
+    }
+    #msg {
+      position:fixed;
+      bottom:20px;
+      left:50%;
+      transform:translateX(-50%);
+      background:rgba(0,0,0,0.5);
+      padding:10px 20px;
+      border-radius:20px;
+      color:white;
     }
     #crosshair {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      font-size: 20px;
+      position:fixed;
+      top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      font-size:20px;
+      color:white;
     }
   </style>
 </head>
@@ -26,54 +34,182 @@
 
 <div id="ui">❤️ ❤️ ❤️</div>
 <div id="crosshair">+</div>
+<div id="msg">你在草地醒来，靠近发光物体并点击</div>
 
 <script type="module">
 import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
-const scene = new THREE.Scene();
+let scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer();
+let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+let renderer = new THREE.WebGLRenderer();
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const light = new THREE.DirectionalLight(0xffffff, 1);
+// 光
+let light = new THREE.DirectionalLight(0xffffff,1);
 light.position.set(5,10,5);
 scene.add(light);
 
-const floor = new THREE.Mesh(
+// 地面
+let floor = new THREE.Mesh(
   new THREE.PlaneGeometry(50,50),
-  new THREE.MeshStandardMaterial({ color: 0x55aa55 })
+  new THREE.MeshStandardMaterial({color:0x55aa55})
 );
 floor.rotation.x = -Math.PI/2;
 scene.add(floor);
 
-const cube = new THREE.Mesh(
-  new THREE.BoxGeometry(),
-  new THREE.MeshStandardMaterial({ color: 0xff0000 })
-);
-cube.position.set(0,1,-5);
-scene.add(cube);
-
+// 玩家
 camera.position.y = 2;
 
+// 控制
 let keys = {};
-addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
-addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+addEventListener('keydown', e=>keys[e.key.toLowerCase()]=true);
+addEventListener('keyup', e=>keys[e.key.toLowerCase()]=false);
 
-function animate(){
-  requestAnimationFrame(animate);
+// 场景物体
+let objects = [];
 
+// 🌿 草地物体
+function createMeadow(){
+  let notebook = new THREE.Mesh(
+    new THREE.BoxGeometry(1,0.2,0.7),
+    new THREE.MeshStandardMaterial({color:0xffffaa, emissive:0x333300})
+  );
+  notebook.position.set(-2,0.5,-5);
+  notebook.name="notebook";
+  scene.add(notebook);
+  objects.push(notebook);
+
+  let butterfly = new THREE.Mesh(
+    new THREE.SphereGeometry(0.3),
+    new THREE.MeshStandardMaterial({color:0xffcc00, emissive:0xffaa00})
+  );
+  butterfly.position.set(2,2,-6);
+  butterfly.name="butterfly";
+  scene.add(butterfly);
+  objects.push(butterfly);
+}
+
+// 🏛 遗迹
+function createRuins(){
+  clearScene();
+
+  scene.background = new THREE.Color(0xa7e4c2);
+
+  let door = new THREE.Mesh(
+    new THREE.BoxGeometry(3,4,0.5),
+    new THREE.MeshStandardMaterial({color:0x888888})
+  );
+  door.position.set(0,2,-5);
+  door.name="door";
+  scene.add(door);
+  objects=[door];
+
+  document.getElementById("msg").innerText="点击石门进入";
+}
+
+// 🧩 解谜
+let puzzleCount = 0;
+
+function createPuzzle(){
+  clearScene();
+
+  scene.background = new THREE.Color(0x333333);
+
+  let gear = new THREE.Mesh(
+    new THREE.TorusGeometry(1,0.2),
+    new THREE.MeshStandardMaterial({color:0xffcc66})
+  );
+  gear.position.set(0,2,-5);
+  gear.name="gear";
+  scene.add(gear);
+  objects=[gear];
+
+  document.getElementById("msg").innerText="点击机关3次";
+}
+
+// 🌟 花园
+function createGarden(){
+  clearScene();
+
+  scene.background = new THREE.Color(0x001a33);
+
+  let crystal = new THREE.Mesh(
+    new THREE.OctahedronGeometry(1),
+    new THREE.MeshStandardMaterial({color:0x66ccff, emissive:0x3399ff})
+  );
+  crystal.position.set(0,2,-5);
+  crystal.name="crystal";
+  scene.add(crystal);
+  objects=[crystal];
+
+  document.getElementById("msg").innerText="你获得了水晶！";
+}
+
+// 清理
+function clearScene(){
+  objects.forEach(o=>scene.remove(o));
+  objects=[];
+}
+
+// 初始化
+createMeadow();
+
+// 点击检测
+let raycaster = new THREE.Raycaster();
+let mouse = new THREE.Vector2();
+
+addEventListener('click', ()=>{
+  raycaster.setFromCamera(mouse,camera);
+  let hits = raycaster.intersectObjects(objects);
+
+  if(hits.length>0){
+    let obj = hits[0].object;
+
+    if(obj.name==="notebook"){
+      document.getElementById("msg").innerText="你获得笔记";
+    }
+
+    if(obj.name==="butterfly"){
+      createRuins();
+    }
+
+    if(obj.name==="door"){
+      createPuzzle();
+    }
+
+    if(obj.name==="gear"){
+      puzzleCount++;
+      if(puzzleCount>=3){
+        createGarden();
+      }
+    }
+  }
+});
+
+// 鼠标锁定视角（简单版）
+addEventListener('mousemove', e=>{
+  camera.rotation.y -= e.movementX*0.002;
+});
+
+// 移动
+function move(){
   if(keys['w']) camera.position.z -= 0.1;
   if(keys['s']) camera.position.z += 0.1;
   if(keys['a']) camera.position.x -= 0.1;
   if(keys['d']) camera.position.x += 0.1;
+}
 
-  renderer.render(scene, camera);
+// 渲染循环
+function animate(){
+  requestAnimationFrame(animate);
+  move();
+  renderer.render(scene,camera);
 }
 animate();
-</script>
 
+</script>
 </body>
 </html>
