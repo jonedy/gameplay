@@ -1,18 +1,18 @@
-package.json
 {
   "name": "gameplay",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "build": "vite build",
     "dev": "vite"
   },
   "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
     "three": "latest",
     "framer-motion": "latest",
     "lucide-react": "latest",
     "react": "latest",
-    "react-dom": "latest",
-    "vite": "latest",
-    "@vitejs/plugin-react": "latest"
+    "react-dom": "latest"
   }
 }
