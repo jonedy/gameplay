@@ -2,58 +2,27 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Fantasy Game Advanced</title>
+  <title>Fantasy Game Advanced Character</title>
   <style>
     body { margin:0; overflow:hidden; background:#050814; font-family:Arial, sans-serif; }
-    #hud {
-      position:fixed; inset:0; pointer-events:none; color:white;
-    }
-    #hearts {
-      position:absolute; top:22px; left:24px; font-size:26px;
-      text-shadow:0 0 12px rgba(255,80,80,.9);
-    }
-    #title {
-      position:absolute; top:22px; right:24px;
-      padding:12px 18px; border-radius:18px;
-      background:rgba(0,0,0,.35); backdrop-filter:blur(8px);
-      border:1px solid rgba(255,255,255,.18);
-    }
+    #hud { position:fixed; inset:0; pointer-events:none; color:white; }
+    #hearts { position:absolute; top:22px; left:24px; font-size:26px; text-shadow:0 0 12px rgba(255,80,80,.9); }
+    #title { position:absolute; top:22px; right:24px; padding:12px 18px; border-radius:18px; background:rgba(0,0,0,.35); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.18); }
     #title b { color:#ffe8a3; }
-    #crosshair {
-      position:absolute; top:50%; left:50%;
-      transform:translate(-50%,-50%);
-      width:14px; height:14px; border:1px solid rgba(255,255,255,.8);
-      border-radius:50%; box-shadow:0 0 18px #fff8c6;
-    }
-    #msg {
-      position:absolute; bottom:26px; left:50%;
-      transform:translateX(-50%);
-      width:min(720px,88vw);
-      padding:18px 22px;
-      border-radius:24px;
-      background:rgba(0,0,0,.42);
-      backdrop-filter:blur(10px);
-      border:1px solid rgba(255,255,255,.18);
-      color:#fff7d6; font-size:16px; line-height:1.6;
-      box-shadow:0 20px 60px rgba(0,0,0,.45);
-    }
-    #hint {
-      position:absolute; left:24px; bottom:24px;
-      padding:10px 14px; border-radius:16px;
-      background:rgba(0,0,0,.32);
-      border:1px solid rgba(255,255,255,.15);
-      color:rgba(255,255,255,.75); font-size:13px;
-    }
+    #crosshair { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:14px; height:14px; border:1px solid rgba(255,255,255,.8); border-radius:50%; box-shadow:0 0 18px #fff8c6; }
+    #msg { position:absolute; bottom:26px; left:50%; transform:translateX(-50%); width:min(760px,88vw); padding:18px 22px; border-radius:24px; background:rgba(0,0,0,.42); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.18); color:#fff7d6; font-size:16px; line-height:1.6; box-shadow:0 20px 60px rgba(0,0,0,.45); }
+    #hint { position:absolute; left:24px; bottom:24px; padding:10px 14px; border-radius:16px; background:rgba(0,0,0,.32); border:1px solid rgba(255,255,255,.15); color:rgba(255,255,255,.75); font-size:13px; }
+    #portrait { position:absolute; right:24px; bottom:24px; width:116px; height:92px; object-fit:cover; border-radius:22px; border:1px solid rgba(255,255,255,.28); box-shadow:0 0 28px rgba(122,229,255,.45); opacity:.95; }
   </style>
 </head>
 <body>
-
 <div id="hud">
   <div id="hearts">❤️ ❤️ ❤️</div>
-  <div id="title"><b>清晨草地</b><br><span>寻找笔记与发光蝴蝶</span></div>
+  <div id="title"><b>清晨草地</b><br><span>寻找笔记与红发少女</span></div>
   <div id="crosshair"></div>
-  <div id="msg">你在柔光草地醒来。WASD 移动，鼠标看四周，准星对准发光物体后点击。</div>
+  <div id="msg">你在柔光草地醒来。WASD 移动，鼠标看四周，准星对准发光物体或角色后点击。</div>
   <div id="hint">WASD 移动 · 鼠标视角 · 点击互动</div>
+  <img id="portrait" src="./assets/character.png" />
 </div>
 
 <script type="module">
@@ -97,6 +66,7 @@ let pitch = 0;
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2(0,0);
 const clock = new THREE.Clock();
+const loader = new THREE.TextureLoader();
 
 const mat = {
   grass: new THREE.MeshStandardMaterial({ color:0x7fcf62, roughness:.85 }),
@@ -109,17 +79,13 @@ const mat = {
   pink: new THREE.MeshStandardMaterial({ color:0xff9dbd, roughness:.7, emissive:0x331122 }),
 };
 
-function setTitle(a,b){
-  title.innerHTML = `<b>${a}</b><br><span>${b}</span>`;
-}
+function setTitle(a,b){ title.innerHTML = `<b>${a}</b><br><span>${b}</span>`; }
 
 function addLights(sky=0xbcecff, fog=0xcff7d2){
   scene.background = new THREE.Color(sky);
   scene.fog.color.set(fog);
-
   const hemi = new THREE.HemisphereLight(0xfff2d0, 0x335533, 2.2);
   root.add(hemi);
-
   const sun = new THREE.DirectionalLight(0xfff1b8, 3.2);
   sun.position.set(-5, 9, 6);
   sun.castShadow = true;
@@ -127,10 +93,7 @@ function addLights(sky=0xbcecff, fog=0xcff7d2){
 }
 
 function floor(color=0x74bd54){
-  const f = new THREE.Mesh(
-    new THREE.PlaneGeometry(80,80,40,40),
-    new THREE.MeshStandardMaterial({ color, roughness:.95 })
-  );
+  const f = new THREE.Mesh(new THREE.PlaneGeometry(80,80,40,40), new THREE.MeshStandardMaterial({ color, roughness:.95 }));
   f.rotation.x = -Math.PI/2;
   f.receiveShadow = true;
   root.add(f);
@@ -168,15 +131,9 @@ function orb(x,y,z,color=0xfff3a0,size=.08){
 function trees(){
   for(let i=0;i<34;i++){
     const g = new THREE.Group();
-    const trunk = new THREE.Mesh(
-      new THREE.CylinderGeometry(.08,.14,1.6,8),
-      new THREE.MeshStandardMaterial({ color:0x7a4b2a })
-    );
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.08,.14,1.6,8), new THREE.MeshStandardMaterial({ color:0x7a4b2a }));
     trunk.position.y=.8;
-    const crown = new THREE.Mesh(
-      new THREE.ConeGeometry(.65,1.7,10),
-      mat.moss
-    );
+    const crown = new THREE.Mesh(new THREE.ConeGeometry(.65,1.7,10), mat.moss);
     crown.position.y=2;
     g.add(trunk,crown);
     const a = Math.random()*Math.PI*2;
@@ -188,20 +145,33 @@ function trees(){
 
 function grassBlades(){
   for(let i=0;i<80;i++){
-    const blade = new THREE.Mesh(
-      new THREE.ConeGeometry(.035,.45+Math.random()*.45,5),
-      mat.moss
-    );
+    const blade = new THREE.Mesh(new THREE.ConeGeometry(.035,.45+Math.random()*.45,5), mat.moss);
     blade.position.set((Math.random()-.5)*22,.23,(Math.random()-.5)*22-2);
     blade.rotation.z = (Math.random()-.5)*.5;
     root.add(blade);
   }
 }
 
+function addCharacter(x=0,y=1.9,z=-4.2){
+  const tex = loader.load("./assets/character.png");
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, transparent:true }));
+  sprite.position.set(x,y,z);
+  sprite.scale.set(2.4,1.85,1);
+  sprite.name = "hero";
+  sprite.userData.baseY = y;
+  objects.push(sprite);
+  root.add(sprite);
+
+  const glow = new THREE.PointLight(0xffd7a3, 1.2, 5);
+  glow.position.set(x,y+0.4,z+0.5);
+  root.add(glow);
+}
+
 function createMeadow(){
   clear();
-  setTitle("清晨草地","寻找笔记与发光蝴蝶");
-  msg.innerText = "你在柔光草地醒来。附近有一本发光笔记，还有一只引路蝴蝶。";
+  setTitle("清晨草地","寻找笔记与红发少女");
+  msg.innerText = "你在柔光草地醒来。红发少女正在翻看笔记，旁边有一只发光蝴蝶。";
   addLights(0xbcecff,0xcff7d2);
   floor(0x78c65a);
   trees();
@@ -211,14 +181,13 @@ function createMeadow(){
   rug.position.set(0,.04,.3);
   root.add(rug);
 
+  addCharacter(-1.25,1.65,-3.6);
+
   const notebook = new THREE.Mesh(new THREE.BoxGeometry(.9,.12,.65), mat.paper);
-  notebook.position.set(-1.3,.25,-1.2);
+  notebook.position.set(.9,.25,-1.2);
   addInteract(notebook,"notebook");
 
-  const butterfly = new THREE.Mesh(
-    new THREE.SphereGeometry(.28,24,24),
-    new THREE.MeshStandardMaterial({ color:0xffee88, emissive:0xffcc33, emissiveIntensity:2 })
-  );
+  const butterfly = new THREE.Mesh(new THREE.SphereGeometry(.28,24,24), new THREE.MeshStandardMaterial({ color:0xffee88, emissive:0xffcc33, emissiveIntensity:2 }));
   butterfly.position.set(1.8,1.8,-4.6);
   addInteract(butterfly,"butterfly");
 
@@ -228,11 +197,12 @@ function createMeadow(){
 function createRuins(){
   clear();
   setTitle("藤蔓遗迹","拨开藤蔓，进入石门");
-  msg.innerText = "你跟随蝴蝶来到遗迹入口。石门上布满藤蔓，金色纹路微微发光。";
+  msg.innerText = "红发少女指向遗迹入口。石门上布满藤蔓，金色纹路微微发光。";
   addLights(0xa7e4c2,0x98dab1);
   floor(0x5f9e4e);
   trees();
   grassBlades();
+  addCharacter(-2.2,1.65,-3.8);
 
   const left = new THREE.Mesh(new THREE.BoxGeometry(.8,4,1), mat.stone);
   const right = left.clone();
@@ -256,9 +226,10 @@ function createRuins(){
 function createPuzzle(){
   clear();
   setTitle("机关石室","旋转机关三次");
-  msg.innerText = "石室里有一枚古代机关。点击金色圆环，让符文对齐。";
+  msg.innerText = "红发少女翻开笔记：太阳、花、星星必须连成一条光路。点击金色圆环。";
   addLights(0x4a3a32,0x3b2a23);
   floor(0x574337);
+  addCharacter(-2.5,1.6,-3.4);
 
   const wall = new THREE.Mesh(new THREE.BoxGeometry(8,4.5,.4), mat.darkStone);
   wall.position.set(0,2.25,-5);
@@ -288,23 +259,18 @@ function createPuzzle(){
 function createGarden(){
   clear();
   setTitle("地下花园","获得蓝色水晶");
-  msg.innerText = "地下花园被蓝色微光照亮。水晶正在等待你。";
+  msg.innerText = "地下花园被蓝色微光照亮。红发少女看着水晶，等待你完成最后一步。";
   addLights(0x123346,0x17404a);
   floor(0x2f6a58);
+  addCharacter(-2.2,1.55,-3.8);
 
-  const lake = new THREE.Mesh(
-    new THREE.CircleGeometry(4,64),
-    new THREE.MeshStandardMaterial({ color:0x1e8e9e, roughness:.2, metalness:.2, transparent:true, opacity:.7 })
-  );
+  const lake = new THREE.Mesh(new THREE.CircleGeometry(4,64), new THREE.MeshStandardMaterial({ color:0x1e8e9e, roughness:.2, metalness:.2, transparent:true, opacity:.7 }));
   lake.rotation.x = -Math.PI/2;
   lake.position.set(0,.03,-3);
   root.add(lake);
 
-  const fairy = new THREE.Mesh(
-    new THREE.SphereGeometry(.24,32,32),
-    new THREE.MeshStandardMaterial({ color:0xffffff, emissive:0x88ffff, emissiveIntensity:2.8 })
-  );
-  fairy.position.set(-1.5,2.3,-3.6);
+  const fairy = new THREE.Mesh(new THREE.SphereGeometry(.24,32,32), new THREE.MeshStandardMaterial({ color:0xffffff, emissive:0x88ffff, emissiveIntensity:2.8 }));
+  fairy.position.set(-.4,2.3,-3.6);
   addInteract(fairy,"fairy");
 
   const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(.75,0), mat.blue);
@@ -337,6 +303,9 @@ addEventListener("click", () => {
   let obj = hits[0].object;
   while(obj.parent && !obj.name) obj = obj.parent;
 
+  if(obj.name === "hero"){
+    msg.innerText = "红发少女：这本笔记不是普通地图，它会带我们找到地下花园。";
+  }
   if(obj.name === "notebook"){
     msg.innerText = "你翻开笔记：太阳、花、星星必须连成一条光路。";
   }
@@ -363,7 +332,7 @@ addEventListener("click", () => {
     msg.innerText = "光之精灵在你面前盘旋，指向水晶。";
   }
   if(obj.name === "crystal"){
-    msg.innerText = "你获得了蓝色水晶。整个地下花园被柔光点亮。";
+    msg.innerText = "你获得了蓝色水晶。红发少女露出笑容，旅程继续。";
     obj.scale.set(1.4,1.4,1.4);
   }
 });
@@ -390,7 +359,6 @@ function move(){
 function animate(){
   requestAnimationFrame(animate);
   const t = clock.getElapsedTime();
-
   move();
 
   particles.forEach((p,i)=>{
